@@ -1,11 +1,14 @@
 package pl.r6lab.rapidaws.sqs;
 
 import pl.r6lab.rapidaws.HttpMethod;
+import pl.r6lab.rapidaws.Request;
+import pl.r6lab.rapidaws.ServiceName;
 
 import java.util.Map;
 
-public final class SQSRequest {
+public final class SQSRequest implements Request {
 
+    private final ServiceName serviceName = ServiceName.SQS;
     private final String action;
     private final String payload;
     private final Map<String, String> params;
@@ -18,6 +21,10 @@ public final class SQSRequest {
         this.params = params;
         this.queueUrl = queueUrl;
         this.method = method;
+    }
+
+    public ServiceName getServiceName() {
+        return serviceName;
     }
 
     public String getAction() {
