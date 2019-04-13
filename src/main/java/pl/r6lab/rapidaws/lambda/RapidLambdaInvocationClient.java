@@ -1,6 +1,10 @@
 package pl.r6lab.rapidaws.lambda;
 
-import pl.r6lab.rapidaws.*;
+import pl.r6lab.rapidaws.HttpMethod;
+import pl.r6lab.rapidaws.RapidClientException;
+import pl.r6lab.rapidaws.Response;
+import pl.r6lab.rapidaws.ServiceName;
+import pl.r6lab.rapidaws.SignatureVersion4;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.BufferedReader;
@@ -16,7 +20,7 @@ import java.time.format.DateTimeFormatter;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-public final class RapidLambdaClient {
+public final class RapidLambdaInvocationClient {
 
     private static final String AWS_ACCESS_KEY_ENV_VARIABLE = "AWS_ACCESS_KEY";
     private static final String AWS_SECRET_KEY_ENV_VARIABLE = "AWS_SECRET_KEY";
@@ -30,7 +34,6 @@ public final class RapidLambdaClient {
 
     private static final String ALGORITHM = "AWS4-HMAC-SHA256";
     private static final String SIGNED_HEADERS = "content-type;host;x-amz-date";
-    private static final String CANONICAL_URI = "/";
     private static final String NEW_LINE = "\n";
     private static final String DOT = ".";
     private static final String X_AMZ_SECURITY_TOKEN = "x-amz-security-token";
@@ -41,14 +44,14 @@ public final class RapidLambdaClient {
     private final String sessionToken;
     private final String region;
 
-    private RapidLambdaClient(String accessKey, String secretKey, String sessionToken, String region) {
+    private RapidLambdaInvocationClient(String accessKey, String secretKey, String sessionToken, String region) {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.sessionToken = sessionToken;
         this.region = region;
     }
 
-    public final Response execute(LambdaRequest request) {
+    public final Response invoke(LambdaRequest request) {
         LocalDateTime now = LocalDateTime.now();
         String signatureDate = now.toLocalDate().format(SIGNATURE_KEY_DATE_FORMATTER);
         String awsDate = now.format(AWS_DATE_FORMATTER);
@@ -84,15 +87,15 @@ public final class RapidLambdaClient {
         }
     }
 
-    public final static RapidLambdaClient envAware() {
-        return new RapidLambdaClient(System.getenv(AWS_ACCESS_KEY_ENV_VARIABLE), System.getenv(AWS_SECRET_KEY_ENV_VARIABLE), System.getenv(AWS_SESSION_TOKEN_ENV_VARIABLE), System.getenv(AWS_REGION_ENV_VARIABLE));
+    public final static RapidLambdaInvocationClient envAware() {
+        return new RapidLambdaInvocationClient(System.getenv(AWS_ACCESS_KEY_ENV_VARIABLE), System.getenv(AWS_SECRET_KEY_ENV_VARIABLE), System.getenv(AWS_SESSION_TOKEN_ENV_VARIABLE), System.getenv(AWS_REGION_ENV_VARIABLE));
     }
 
-    public final static RapidLambdaClient of(String accessKey, String secretKey, String sessionToken, String region) {
+    public final static RapidLambdaInvocationClient of(String accessKey, String secretKey, String sessionToken, String region) {
         if (isNull(accessKey) || isNull(secretKey) || isNull(region)) {
             throw new IllegalArgumentException("Missing mandatory AWS parameters");
         }
-        return new RapidLambdaClient(accessKey, secretKey, sessionToken, region);
+        return new RapidLambdaInvocationClient(accessKey, secretKey, sessionToken, region);
     }
 
     private HttpURLConnection initConnection(HttpMethod method, String functionName) {
