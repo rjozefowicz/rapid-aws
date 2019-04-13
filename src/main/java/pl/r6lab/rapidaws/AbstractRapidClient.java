@@ -1,5 +1,6 @@
 package pl.r6lab.rapidaws;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +15,15 @@ import java.time.format.DateTimeFormatter;
 import static java.util.Objects.nonNull;
 
 public abstract class AbstractRapidClient {
+
+    static {
+        try {
+            HttpsURLConnection.setDefaultSSLSocketFactory(new PoolingSSLSocketFactory(5));
+        } catch (Exception e) {
+            System.err.println("Unable to set default SSL Socket Factory");
+            e.printStackTrace();
+        }
+    }
 
     protected static final String AWS_ACCESS_KEY_ENV_VARIABLE = "AWS_ACCESS_KEY";
     protected static final String AWS_SECRET_KEY_ENV_VARIABLE = "AWS_SECRET_KEY";
@@ -51,8 +61,10 @@ public abstract class AbstractRapidClient {
         String signatureDate = now.toLocalDate().format(SIGNATURE_KEY_DATE_FORMATTER);
         String awsDate = now.format(AWS_DATE_FORMATTER);
 
+        HttpsURLConnection connection = null;
+
         try {
-            HttpURLConnection connection = initConnection(request);
+            connection = initConnection(request);
             byte[] signingKey = SignatureVersion4.getSignatureKey(this.secretKey, now.toLocalDate(), this.region, request.getServiceName().getName());
             int contentLength = payload(request).getBytes().length;
             setBasicHeaders(connection, request, awsDate, contentLength);
@@ -83,6 +95,10 @@ public abstract class AbstractRapidClient {
             return handleResponse(connection);
         } catch (Exception e) {
             throw new RapidClientException(e);
+        } finally {
+            if (nonNull(connection)) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -118,9 +134,9 @@ public abstract class AbstractRapidClient {
         System.out.println(SEPARATOR);
     }
 
-    private HttpURLConnection initConnection(Request request) {
+    private HttpsURLConnection initConnection(Request request) {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(endpointUrl(request)).openConnection();
+            HttpsURLConnection connection = (HttpsURLConnection) new URL(endpointUrl(request)).openConnection();
             connection.setRequestMethod(request.getMethod().name());
             connection.setDoOutput(true);
             return connection;
@@ -129,7 +145,7 @@ public abstract class AbstractRapidClient {
         }
     }
 
-    private Response handleResponse(HttpURLConnection connection) throws IOException {
+    private Response handleResponse(HttpsURLConnection connection) throws IOException {
         if (connection.getResponseCode() == 200) {
             return Response.success(getResponse(connection.getInputStream()));
         } else {
