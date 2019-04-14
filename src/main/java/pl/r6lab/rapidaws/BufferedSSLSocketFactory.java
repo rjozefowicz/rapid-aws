@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class PoolingSSLSocketFactory extends SSLSocketFactory {
+public class BufferedSSLSocketFactory extends SSLSocketFactory {
 
     private final SSLSocketFactoryImpl sslSocketFactory;
     private final List<Socket> sockets = new CopyOnWriteArrayList<>();
 
-    public PoolingSSLSocketFactory(int initialPoolSize) throws Exception {
+    public BufferedSSLSocketFactory(int initialPoolSize) throws Exception {
         this.sslSocketFactory = new SSLSocketFactoryImpl();
         synchronized (this) {
             for (int i = 0; i < initialPoolSize; ++i) {
@@ -30,9 +30,7 @@ public class PoolingSSLSocketFactory extends SSLSocketFactory {
         synchronized (this) {
             Optional<Socket> availableSocket = sockets.stream().filter(socket -> !socket.isConnected()).findAny();
             if (availableSocket.isPresent()) {
-                Socket socket = availableSocket.get();
-
-                return socket;
+                return availableSocket.get();
             }
         }
         Socket socket = this.sslSocketFactory.createSocket();

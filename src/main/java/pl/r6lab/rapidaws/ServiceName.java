@@ -4,7 +4,7 @@ public enum ServiceName {
     DYNAMODB("dynamodb", "DynamoDB_20120810", "application/x-amz-json-1.0"),
     COMPREHEND("comprehend", "Comprehend_20171127", "application/x-amz-json-1.1"),
     LAMBDA("lambda", "Lambda_2015_0331", "application/x-amz-json-1.1"),
-    SNS("sns", "SNS_20100331", "application/x-amz-json-1.1"),
+    SNS("sns", "SNS_20100331", "application/x-www-form-urlencoded"), // TODO
     SQS("sqs", "AmazonSQSv20121105", "application/x-www-form-urlencoded");
 
     private final String name;

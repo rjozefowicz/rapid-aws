@@ -18,7 +18,7 @@ public abstract class AbstractRapidClient {
 
     static {
         try {
-            HttpsURLConnection.setDefaultSSLSocketFactory(new PoolingSSLSocketFactory(5));
+            HttpsURLConnection.setDefaultSSLSocketFactory(new BufferedSSLSocketFactory(5)); // TODO should be customized
         } catch (Exception e) {
             System.err.println("Unable to set default SSL Socket Factory");
             e.printStackTrace();
