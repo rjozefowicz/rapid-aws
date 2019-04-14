@@ -13,7 +13,14 @@ Current implementation allows integration with:
 
 ## Example AWS Lambda
 
-This example assumes that there is DynamoDB Table **rapid-aws-data** created with Primary Key **uuid** with String type. It uses **org.json** as JSON parser for better readibility during preparing JSON requests.
+This example assumes that there are configured:
+* DynamoDB Table **rapid-aws-data** created with Primary Key **uuid** with String type
+* SQS queue **rapid-aws-example**
+* Another Lambda function **detected-entities-processor**
+
+It uses **org.json** as JSON parser for better readibility during preparing JSON requests.
+
+In order to increase performance there is a custom **SSLSocketFactory** implementation that creates pool of sockets to be used by Rapid clients.
 
 JSON request in the following format:
 ```javascript
