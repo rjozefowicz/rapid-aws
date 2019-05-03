@@ -2,25 +2,26 @@ package pl.r6lab.rapidaws;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static java.util.Objects.nonNull;
 
 public abstract class AbstractRapidClient {
 
+    private static final int DEFAULT_SOCKETS_NUMBER = 5;
+    private static final Logger log = Logger.getGlobal();
+
     static {
         try {
-            HttpsURLConnection.setDefaultSSLSocketFactory(new BufferedSSLSocketFactory(5)); // TODO should be customized
+            String initialSockets = System.getenv("INITIAL_SOCKETS");
+            HttpsURLConnection.setDefaultSSLSocketFactory(new BufferedSSLSocketFactory(nonNull(initialSockets) ? Integer.valueOf(initialSockets) : DEFAULT_SOCKETS_NUMBER));
         } catch (Exception e) {
-            System.err.println("Unable to set default SSL Socket Factory");
+            log.log(Level.WARNING, "Unable to set default SSL Socket Factory");
             e.printStackTrace();
         }
     }
@@ -29,7 +30,6 @@ public abstract class AbstractRapidClient {
     protected static final String AWS_SECRET_KEY_ENV_VARIABLE = "AWS_SECRET_KEY";
     protected static final String AWS_SESSION_TOKEN_ENV_VARIABLE = "AWS_SESSION_TOKEN";
     protected static final String AWS_REGION_ENV_VARIABLE = "AWS_REGION";
-    protected static final String SEPARATOR = "---------------";
 
     private static final String SIGNATURE_KEY_DATE_PATTERN = "YYYYMMdd";
     private static final String AWS_DATE_PATTERN = "YYYYMMdd'T'HHmmss'Z'";
@@ -61,17 +61,15 @@ public abstract class AbstractRapidClient {
         String signatureDate = now.toLocalDate().format(SIGNATURE_KEY_DATE_FORMATTER);
         String awsDate = now.format(AWS_DATE_FORMATTER);
 
-        HttpsURLConnection connection = null;
-
         try {
-            connection = initConnection(request);
+            PooledConnection connection = PooledConnection.newConnection(endpointUrl(request));
             byte[] signingKey = SignatureVersion4.getSignatureKey(this.secretKey, now.toLocalDate(), this.region, request.getServiceName().getName());
             int contentLength = payload(request).getBytes().length;
             setBasicHeaders(connection, request, awsDate, contentLength);
 
             // Used for Temporary Security Credentials
             if (nonNull(this.sessionToken)) {
-                connection.setRequestProperty(X_AMZ_SECURITY_TOKEN, sessionToken);
+                connection.addHeader(X_AMZ_SECURITY_TOKEN, sessionToken);
             }
 
             String stringToSign = stringToSign(contentLength, awsDate, signatureDate, request);
@@ -88,17 +86,13 @@ public abstract class AbstractRapidClient {
             if (this.printHeaders) {
                 printHeader("Authorization", authorizationHeader);
             }
-            connection.setRequestProperty(AUTHORIZATION_HEADER, authorizationHeader);
+            connection.addHeader(AUTHORIZATION_HEADER, authorizationHeader);
 
-            connection.getOutputStream().write(payload(request).getBytes());
-            connection.getOutputStream().flush();
-            return handleResponse(connection);
+            String rawResponse = connection.execute(request.getMethod(), payload(request));
+//            connection.getOutputStream().flush();
+            return handleResponse(rawResponse);
         } catch (Exception e) {
             throw new RapidClientException(e);
-        } finally {
-            if (nonNull(connection)) {
-                connection.disconnect();
-            }
         }
     }
 
@@ -110,7 +104,7 @@ public abstract class AbstractRapidClient {
         return region;
     }
 
-    protected abstract void setBasicHeaders(HttpURLConnection connection, Request request, String awsDate, int contentLength);
+    protected abstract void setBasicHeaders(PooledConnection connection, Request request, String awsDate, int contentLength);
 
     protected abstract String canonicalRequest(int contentLength, String awsDate, Request request) throws NoSuchAlgorithmException;
 
@@ -131,37 +125,29 @@ public abstract class AbstractRapidClient {
     protected void printHeader(String header, String value) {
         System.out.println(header);
         System.out.println(value);
-        System.out.println(SEPARATOR);
+        System.out.println("----------");
     }
 
-    private HttpsURLConnection initConnection(Request request) {
-        try {
-            HttpsURLConnection connection = (HttpsURLConnection) new URL(endpointUrl(request)).openConnection();
-            connection.setRequestMethod(request.getMethod().name());
-            connection.setDoOutput(true);
-            return connection;
-        } catch (IOException e) {
-            throw new RapidClientException(e);
-        }
-    }
+//    private HttpsURLConnection initConnection(Request request) {
+//        try {
+//            PooledConnection pooledConnection = PooledConnection.newConnection(endpointUrl(request));
+//            HttpsURLConnection connection = (HttpsURLConnection) new URL(endpointUrl(request)).openConnection();
+//            connection.setRequestMethod(request.getMethod().name());
+//            connection.setDoOutput(true);
+//            return connection;
+//        } catch (IOException e) {
+//            throw new RapidClientException(e);
+//        }
+//    }
 
-    private Response handleResponse(HttpsURLConnection connection) throws IOException {
-        if (connection.getResponseCode() == 200) {
-            return Response.success(getResponse(connection.getInputStream()));
-        } else {
-            return Response.fail(getResponse(connection.getErrorStream()));
-        }
-    }
-
-    private String getResponse(InputStream inputStream) throws IOException {
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(inputStream));
-        String inputLine;
-        StringBuilder content = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            content.append(inputLine);
-        }
-        return content.toString();
+    private Response handleResponse(String rawResponse) throws IOException {
+        System.out.println(rawResponse);
+        return null;
+//        if (connection.getResponseCode() == 200) {
+//            return Response.success(getResponse(connection.getInputStream()));
+//        } else {
+//            return Response.fail(getResponse(connection.getErrorStream()));
+//        }
     }
 
     private String stringToSign(int contentLength, String awsDate, String signatureDate, Request request) throws NoSuchAlgorithmException {

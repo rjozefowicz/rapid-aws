@@ -1,11 +1,11 @@
 package pl.r6lab.rapidaws.sqs;
 
 import pl.r6lab.rapidaws.AbstractRapidClient;
+import pl.r6lab.rapidaws.PooledConnection;
 import pl.r6lab.rapidaws.Request;
 import pl.r6lab.rapidaws.ServiceName;
 import pl.r6lab.rapidaws.SignatureVersion4;
 
-import java.net.HttpURLConnection;
 import java.security.NoSuchAlgorithmException;
 
 import static java.util.Objects.isNull;
@@ -32,10 +32,10 @@ public final class RapidSQSClient extends AbstractRapidClient {
     }
 
     @Override
-    protected void setBasicHeaders(HttpURLConnection connection, Request request, String awsDate, int contentLength) {
-        connection.setRequestProperty("Content-Type", ServiceName.SQS.getContentType());
-        connection.setRequestProperty("Host", host(ServiceName.SQS.getName()));
-        connection.setRequestProperty("X-Amz-Date", awsDate);
+    protected void setBasicHeaders(PooledConnection connection, Request request, String awsDate, int contentLength) {
+        connection.addHeader("Content-Type", ServiceName.SQS.getContentType());
+        connection.addHeader("Host", host(ServiceName.SQS.getName()));
+        connection.addHeader("X-Amz-Date", awsDate);
     }
 
     @Override

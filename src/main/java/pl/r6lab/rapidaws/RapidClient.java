@@ -1,6 +1,5 @@
 package pl.r6lab.rapidaws;
 
-import java.net.HttpURLConnection;
 import java.security.NoSuchAlgorithmException;
 
 import static java.util.Objects.isNull;
@@ -28,12 +27,12 @@ public final class RapidClient extends AbstractRapidClient {
     }
 
     @Override
-    protected void setBasicHeaders(HttpURLConnection connection, Request request, String awsDate, int contentLength) {
-        connection.setRequestProperty("Content-Length", Integer.toString(contentLength));
-        connection.setRequestProperty("Content-Type", request.getServiceName().getContentType());
-        connection.setRequestProperty("Host", host(request.getServiceName().getName()));
-        connection.setRequestProperty("X-Amz-Date", awsDate);
-        connection.setRequestProperty("X-Amz-Target", request.getServiceName().getVersion() + DOT + request.getAction());
+    protected void setBasicHeaders(PooledConnection connection, Request request, String awsDate, int contentLength) {
+        connection.addHeader("Content-Length", Integer.toString(contentLength));
+        connection.addHeader("Content-Type", request.getServiceName().getContentType());
+        connection.addHeader("Host", host(request.getServiceName().getName()));
+        connection.addHeader("X-Amz-Date", awsDate);
+        connection.addHeader("X-Amz-Target", request.getServiceName().getVersion() + DOT + request.getAction());
     }
 
     @Override

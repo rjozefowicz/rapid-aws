@@ -20,4 +20,14 @@
             </plugin>
         </plugins>
     </build>
+
+
+    <!-- TODO remove once tests are done -->
+    <dependencies>
+        <dependency>
+            <groupId>com.sparkjava</groupId>
+            <artifactId>spark-core</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+    </dependencies>
 </project>
