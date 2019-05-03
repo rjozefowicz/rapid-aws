@@ -89,7 +89,6 @@ public abstract class AbstractRapidClient {
             connection.addHeader(AUTHORIZATION_HEADER, authorizationHeader);
 
             String rawResponse = connection.execute(request.getMethod(), payload(request));
-//            connection.getOutputStream().flush();
             return handleResponse(rawResponse);
         } catch (Exception e) {
             throw new RapidClientException(e);
@@ -127,18 +126,6 @@ public abstract class AbstractRapidClient {
         System.out.println(value);
         System.out.println("----------");
     }
-
-//    private HttpsURLConnection initConnection(Request request) {
-//        try {
-//            PooledConnection pooledConnection = PooledConnection.newConnection(endpointUrl(request));
-//            HttpsURLConnection connection = (HttpsURLConnection) new URL(endpointUrl(request)).openConnection();
-//            connection.setRequestMethod(request.getMethod().name());
-//            connection.setDoOutput(true);
-//            return connection;
-//        } catch (IOException e) {
-//            throw new RapidClientException(e);
-//        }
-//    }
 
     private Response handleResponse(String rawResponse) throws IOException {
         System.out.println(rawResponse);
