@@ -1,30 +1,13 @@
 package pl.r6lab.rapidaws;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static java.util.Objects.nonNull;
 
 public abstract class AbstractRapidClient {
-
-    private static final int DEFAULT_SOCKETS_NUMBER = 5;
-    private static final Logger log = Logger.getGlobal();
-
-    static {
-        try {
-            String initialSockets = System.getenv("INITIAL_SOCKETS");
-            HttpsURLConnection.setDefaultSSLSocketFactory(new BufferedSSLSocketFactory(nonNull(initialSockets) ? Integer.valueOf(initialSockets) : DEFAULT_SOCKETS_NUMBER));
-        } catch (Exception e) {
-            log.log(Level.WARNING, "Unable to set default SSL Socket Factory");
-            e.printStackTrace();
-        }
-    }
 
     protected static final String AWS_ACCESS_KEY_ENV_VARIABLE = "AWS_ACCESS_KEY";
     protected static final String AWS_SECRET_KEY_ENV_VARIABLE = "AWS_SECRET_KEY";
@@ -62,7 +45,7 @@ public abstract class AbstractRapidClient {
         String awsDate = now.format(AWS_DATE_FORMATTER);
 
         try {
-            PooledConnection connection = PooledConnection.newConnection(endpointUrl(request));
+            PooledConnection connection = PooledConnection.newConnection(endpointUrl(request), request.getServiceName().isHttpsRequired());
             byte[] signingKey = SignatureVersion4.getSignatureKey(this.secretKey, now.toLocalDate(), this.region, request.getServiceName().getName());
             int contentLength = payload(request).getBytes().length;
             setBasicHeaders(connection, request, awsDate, contentLength);
@@ -88,8 +71,7 @@ public abstract class AbstractRapidClient {
             }
             connection.addHeader(AUTHORIZATION_HEADER, authorizationHeader);
 
-            String rawResponse = connection.execute(request.getMethod(), payload(request));
-            return handleResponse(rawResponse);
+            return connection.execute(request.getMethod(), payload(request));
         } catch (Exception e) {
             throw new RapidClientException(e);
         }
@@ -125,16 +107,6 @@ public abstract class AbstractRapidClient {
         System.out.println(header);
         System.out.println(value);
         System.out.println("----------");
-    }
-
-    private Response handleResponse(String rawResponse) throws IOException {
-        System.out.println(rawResponse);
-        return null;
-//        if (connection.getResponseCode() == 200) {
-//            return Response.success(getResponse(connection.getInputStream()));
-//        } else {
-//            return Response.fail(getResponse(connection.getErrorStream()));
-//        }
     }
 
     private String stringToSign(int contentLength, String awsDate, String signatureDate, Request request) throws NoSuchAlgorithmException {

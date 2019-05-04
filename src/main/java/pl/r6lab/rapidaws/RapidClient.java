@@ -82,7 +82,7 @@ public final class RapidClient extends AbstractRapidClient {
     @Override
     protected String endpointUrl(Request request) {
         return new StringBuilder()
-                .append("https://")
+                .append(request.getServiceName().isHttpsRequired() ? "https://" : "http://")
                 .append(host(request.getServiceName().getName()))
                 .toString();
     }

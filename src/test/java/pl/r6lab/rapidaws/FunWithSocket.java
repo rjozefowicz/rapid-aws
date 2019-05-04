@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import static java.net.InetAddress.getByName;
 
 public class FunWithSocket {
-    public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
+    public static void main(String[] args) throws Exception {
 
         String endpoint = "localhost";
         String path = "/test";
@@ -33,7 +33,7 @@ public class FunWithSocket {
 //        readOutput(socket);
 
 
-        PooledConnection pooledConnection = PooledConnection.newConnection(endpoint + path);
+        PooledConnection pooledConnection = PooledConnection.newConnection(endpoint + path, false);
         pooledConnection.addHeader("Host", endpoint + ":" + 9000);
         pooledConnection.addHeader("Content-Length", Integer.toString(payload.length()));
         System.out.println(pooledConnection.execute(HttpMethod.POST, payload));
