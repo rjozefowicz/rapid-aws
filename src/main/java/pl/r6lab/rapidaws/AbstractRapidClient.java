@@ -57,17 +57,17 @@ public abstract class AbstractRapidClient {
 
             String stringToSign = stringToSign(contentLength, awsDate, signatureDate, request);
             if (this.printHeaders) {
-                printHeader("String to sign", stringToSign);
+                printHeader("String to sign:", stringToSign);
             }
 
             String signature = signature(signingKey, stringToSign);
             if (this.printHeaders) {
-                printHeader("Signature", signature);
+                printHeader("Signature:", signature);
             }
 
             String authorizationHeader = authorizationHeader(signature, signatureDate, request.getServiceName().getName());
             if (this.printHeaders) {
-                printHeader("Authorization", authorizationHeader);
+                printHeader("Authorization:", authorizationHeader);
             }
             connection.addHeader(AUTHORIZATION_HEADER, authorizationHeader);
 

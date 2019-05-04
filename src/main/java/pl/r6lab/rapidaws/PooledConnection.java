@@ -64,6 +64,7 @@ public final class PooledConnection {
         sb.append(NEW_LINE);
         sb.append(payload);
         sb.append(NEW_LINE);
+        System.out.println(sb.toString());
         try {
             this.socket.getOutputStream().write(sb.toString().getBytes(StandardCharsets.UTF_8));
             this.socket.getOutputStream().flush();

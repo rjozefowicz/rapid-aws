@@ -63,7 +63,7 @@ public final class RapidClient extends AbstractRapidClient {
                         .append(hashedPayload)
                         .toString();
         if (this.isPrintHeaders()) {
-            this.printHeader("Canonical request", canonicalRequest);
+            this.printHeader("Canonical request:", canonicalRequest);
         }
         return canonicalRequest;
     }
