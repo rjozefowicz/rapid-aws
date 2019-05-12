@@ -19,20 +19,19 @@ public class BufferedSSLSocketFactory extends SSLSocketFactory {
 
     public BufferedSSLSocketFactory(int initialPoolSize) throws Exception {
         this.sslSocketFactory = new SSLSocketFactoryImpl();
-        synchronized (this) {
-            for (int i = 0; i < initialPoolSize; ++i) {
-                sockets.add(this.sslSocketFactory.createSocket());
-            }
+        System.out.println("Number of initially created sockets: " + initialPoolSize);
+        for (int i = 0; i < initialPoolSize; ++i) {
+            sockets.add(this.sslSocketFactory.createSocket());
         }
+
     }
 
     public Socket createSocket() {
-        synchronized (this) {
-            Optional<Socket> availableSocket = sockets.stream().filter(socket -> !socket.isConnected()).findAny();
-            if (availableSocket.isPresent()) {
-                return availableSocket.get();
-            }
+        Optional<Socket> availableSocket = sockets.stream().filter(socket -> !socket.isConnected()).findAny();
+        if (availableSocket.isPresent()) {
+            return availableSocket.get();
         }
+
         Socket socket = this.sslSocketFactory.createSocket();
         sockets.add(socket);
         return socket;
