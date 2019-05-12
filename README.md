@@ -11,6 +11,12 @@ Current implementation allows integration with:
 
 # Getting Started
 
+## Configuration
+
+The following environment variables can be configured:
+* FORCE_HTTPS: boolean - Some AWS services allow communication via plan HTTP. It can reduce connection time and cold starts a lot. By default this variable is set as false
+* INITIAL_SSL_SOCKETS - Number of initially created SSL sockets during container startup. It can slightly speed up initial connections to AWS services. It is good to match number of sockets with number of AWS services accessed from Lambda function 
+
 ## Example AWS Lambda
 
 This example assumes that there are configured:
@@ -18,7 +24,7 @@ This example assumes that there are configured:
 * SQS queue **rapid-aws-example**
 * Another Lambda function **detected-entities-processor**
 
-It uses **org.json** as JSON parser for better readibility during preparing JSON requests.
+It uses **org.json** as JSON parser for better readability during preparing JSON requests.
 
 In order to increase performance there is a custom **SSLSocketFactory** implementation that creates pool of sockets to be used by Rapid clients.
 
