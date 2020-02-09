@@ -1,6 +1,5 @@
 package pl.r6lab.rapidaws;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,20 +15,7 @@ import static java.util.Objects.nonNull;
 
 public abstract class AbstractRapidClient {
 
-    private static final String INITIAL_SSL_SOCKETS = "INITIAL_SSL_SOCKETS";
     private static final String FORCE_HTTPS = "FORCE_HTTPS";
-
-    static {
-        try {
-            String initialSockets = System.getenv(INITIAL_SSL_SOCKETS);
-            if (nonNull(initialSockets)) {
-                HttpsURLConnection.setDefaultSSLSocketFactory(new BufferedSSLSocketFactory(Integer.valueOf(initialSockets)));
-            }
-        } catch (Exception e) {
-            System.err.println("Unable to set default SSL Socket Factory");
-            e.printStackTrace();
-        }
-    }
 
     protected static final String AWS_ACCESS_KEY_ENV_VARIABLE = "AWS_ACCESS_KEY";
     protected static final String AWS_SECRET_KEY_ENV_VARIABLE = "AWS_SECRET_KEY";
