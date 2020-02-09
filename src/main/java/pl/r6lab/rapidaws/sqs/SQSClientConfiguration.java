@@ -1,45 +1,47 @@
 package pl.r6lab.rapidaws.sqs;
 
-import pl.r6lab.rapidaws.AbstractRapidClient;
+import pl.r6lab.rapidaws.RapidClientConfiguration;
 import pl.r6lab.rapidaws.Request;
 import pl.r6lab.rapidaws.ServiceName;
 import pl.r6lab.rapidaws.SignatureVersion4;
 
-import java.net.HttpURLConnection;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
 import static java.util.Objects.isNull;
 
-public final class RapidSQSClient extends AbstractRapidClient {
+public final class SQSClientConfiguration extends RapidClientConfiguration {
 
     private static final String SIGNED_HEADERS = "content-type;host;x-amz-date";
     private static final String NEW_LINE = "\n";
     private static final String DOT = ".";
 
-    private RapidSQSClient(String accessKey, String secretKey, String sessionToken, String region) {
+    private SQSClientConfiguration(String accessKey, String secretKey, String sessionToken, String region) {
         super(accessKey, secretKey, sessionToken, region);
     }
 
-    public final static RapidSQSClient envAware() {
-        return new RapidSQSClient(System.getenv(AWS_ACCESS_KEY_ENV_VARIABLE), System.getenv(AWS_SECRET_KEY_ENV_VARIABLE), System.getenv(AWS_SESSION_TOKEN_ENV_VARIABLE), System.getenv(AWS_REGION_ENV_VARIABLE));
+    public final static SQSClientConfiguration envAware() {
+        return new SQSClientConfiguration(System.getenv(AWS_ACCESS_KEY_ENV_VARIABLE), System.getenv(AWS_SECRET_KEY_ENV_VARIABLE), System.getenv(AWS_SESSION_TOKEN_ENV_VARIABLE), System.getenv(AWS_REGION_ENV_VARIABLE));
     }
 
-    public final static RapidSQSClient of(String accessKey, String secretKey, String sessionToken, String region) {
+    public final static SQSClientConfiguration of(String accessKey, String secretKey, String sessionToken, String region) {
         if (isNull(accessKey) || isNull(secretKey) || isNull(region)) {
             throw new IllegalArgumentException("Missing mandatory AWS parameters");
         }
-        return new RapidSQSClient(accessKey, secretKey, sessionToken, region);
+        return new SQSClientConfiguration(accessKey, secretKey, sessionToken, region);
     }
 
     @Override
-    protected void setBasicHeaders(HttpURLConnection connection, Request request, String awsDate, int contentLength) {
-        connection.setRequestProperty("Content-Type", ServiceName.SQS.getContentType());
-        connection.setRequestProperty("Host", host(ServiceName.SQS.getName()));
-        connection.setRequestProperty("X-Amz-Date", awsDate);
+    public Map<String, String> buildBasicHeaders(Request request, String awsDate, int contentLength) {
+        return Map.of(
+                "Content-Type", ServiceName.SQS.getContentType(),
+                "X-Amz-Host", host(ServiceName.SQS.getName()),
+                "X-Amz-Date", awsDate
+        );
     }
 
     @Override
-    protected String canonicalRequest(int contentLength, String awsDate, Request request) throws NoSuchAlgorithmException {
+    public String canonicalRequest(int contentLength, String awsDate, Request request) throws NoSuchAlgorithmException {
         SQSRequest sqsRequest = (SQSRequest) request;
         String hashedPayload = hexBinary(SignatureVersion4.sha256(payload(sqsRequest))).toLowerCase();
         String canonicalRequest = new StringBuilder()
@@ -58,14 +60,11 @@ public final class RapidSQSClient extends AbstractRapidClient {
                 .append(NEW_LINE)
                 .append(hashedPayload)
                 .toString();
-        if (this.isPrintHeaders()) {
-            this.printHeader("Canonical request", canonicalRequest);
-        }
         return canonicalRequest;
     }
 
     @Override
-    protected String canonicalHeaders(String awsDate, String serviceName) {
+    public String canonicalHeaders(String awsDate, String serviceName) {
         return new StringBuilder()
                 .append("host:")
                 .append(host(serviceName))
@@ -76,17 +75,17 @@ public final class RapidSQSClient extends AbstractRapidClient {
     }
 
     @Override
-    protected String endpointUrl(Request request) {
+    public String endpointUrl(Request request) {
         return ((SQSRequest) request).getQueueUrl();
     }
 
     @Override
-    protected String signedHeaders() {
+    public String signedHeaders() {
         return SIGNED_HEADERS;
     }
 
     @Override
-    protected String payload(Request request) {
+    public String payload(Request request) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder
                 .append("Action=")
@@ -98,7 +97,7 @@ public final class RapidSQSClient extends AbstractRapidClient {
     }
 
     @Override
-    protected String host(String serviceName) {
+    public String host(String serviceName) {
         return new StringBuilder().append(serviceName)
                 .append(DOT)
                 .append(this.getRegion())
