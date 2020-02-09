@@ -77,7 +77,11 @@ public final class HttpConnectionRapidClient extends AbstractRapidClient {
 
     private HttpURLConnection initConnection(Request request) {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(configuration.endpointUrl(request)).openConnection();
+            final String endpointUrl = configuration.endpointUrl(request);
+            if (isPrintHeaders()) {
+                printHeader("AWS Service endpoint", endpointUrl);
+            }
+            HttpURLConnection connection = (HttpURLConnection) new URL(endpointUrl).openConnection();
             connection.setRequestMethod(request.getMethod().name());
             connection.setDoOutput(true);
             return connection;

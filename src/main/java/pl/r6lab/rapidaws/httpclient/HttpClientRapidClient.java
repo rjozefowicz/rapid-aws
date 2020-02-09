@@ -67,8 +67,12 @@ public final class HttpClientRapidClient extends AbstractRapidClient {
             headers.add(AUTHORIZATION_HEADER);
             headers.add(authorizationHeader);
 
+            final String endpointUrl = configuration.endpointUrl(request);
+            if (isPrintHeaders()) {
+                printHeader("AWS Service endpoint", endpointUrl);
+            }
             HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(new URI(configuration.endpointUrl(request)))
+                    .uri(new URI(endpointUrl))
                     .headers(headers.toArray(headers.stream().toArray(String[]::new)))
                     .POST(HttpRequest.BodyPublishers.ofByteArray(configuration.payload(request).getBytes()))
                     .build();
