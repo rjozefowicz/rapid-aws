@@ -7,6 +7,8 @@ import pl.r6lab.rapidaws.Request;
 import pl.r6lab.rapidaws.Response;
 import pl.r6lab.rapidaws.SignatureVersion4;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +21,21 @@ import java.util.Map;
 import static java.util.Objects.nonNull;
 
 public final class HttpConnectionRapidClient extends AbstractRapidClient {
+
+    private static final String INITIAL_SSL_SOCKETS = "INITIAL_SSL_SOCKETS";
+
+    static {
+        try {
+            String initialSockets = System.getenv(INITIAL_SSL_SOCKETS);
+            if (nonNull(initialSockets)) {
+                final SSLSocketFactory defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+                HttpsURLConnection.setDefaultSSLSocketFactory(new CachedSSLSocketFactory(Integer.valueOf(initialSockets), defaultSSLSocketFactory));
+            }
+        } catch (Exception e) {
+            System.err.println("Unable to set default SSL Socket Factory");
+            e.printStackTrace();
+        }
+    }
 
     private final RapidClientConfiguration configuration;
 
